@@ -4,8 +4,10 @@
 ########### MUSIC-DL ###########
 ################################
 
-USAGE="Usage: music-dl -t [TARGET URL] -q [SONG/ARTIST/ALBUM] -d [TARGET DIRECTORY]"
-
+# set important variables
+CONFIG_DIR="$HOME/.config/music-dl/"
+CONFIG_FILE="$CONFIGDIR/settings.conf"
+USAGE="Usage: music-dl -t [TARGET URL] -q [SONG/ARTIST/ALBUM]"
 HELP="$USAGE
 Download music and appropriate metadata.
 
@@ -15,8 +17,10 @@ Download music and appropriate metadata.
 -u, --usage : prints usage
 -h, --help : prints this message"
 
-# Parse arguments
+API="https://musicbrainz.org/ws/2"
+USER_AGENT="music-dl/0.1 ( https://github.com/mrSpooder/music-dl )"
 
+# parse arguments
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-u|--usage) echo "$USAGE"; exit 0 ;;
@@ -33,4 +37,10 @@ while [ "$#" -gt 0 ]; do
 		-*) echo "unkown option: $1" >&2; exit 1 ;;
 	esac
 done
+
+if [[ -z $URL || -z $QUERY ]]; then
+	echo "missing target URL and/or search query" >&2;
+	echo "$USAGE" >&2;
+	exit 1;
+fi
 
