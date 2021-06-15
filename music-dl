@@ -4,6 +4,17 @@
 ########### MUSIC-DL ###########
 ################################
 
+USAGE="Usage: music-dl -t [TARGET URL] -q [SONG/ARTIST/ALBUM] -d [TARGET DIRECTORY]"
+
+HELP="$USAGE
+Download music and appropriate metadata.
+
+-t, --target= : specify target URL
+-q, --query= : specify search query
+-d, --dir= : specify directory for download
+-u, --usage : prints usage
+-h, --help : prints this message"
+
 # Parse arguments
 
 while [ "$#" -gt 0 ]; do
