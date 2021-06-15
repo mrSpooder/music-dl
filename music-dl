@@ -1,0 +1,25 @@
+#!/bin/sh
+
+################################
+########### MUSIC-DL ###########
+################################
+
+# Parse arguments
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		-u|--usage) echo "$USAGE"; exit 0 ;;
+		-h|--help) echo "$HELP"; exit 0 ;;
+
+		-t) URL="$2"; shift 2 ;;
+		-q) QUERY="$2"; shift 2 ;;
+		-d) DIR="$2"; shift 2 ;;
+
+		--target=*) URL="${1#*=}"; shift 1 ;;
+		--query=*) QUERY="${1#*=}"; shift 1 ;;
+		--dir=*) DIR="${1#*=}"; shift 1 ;;
+
+		-*) echo "unkown option: $1" >&2; exit 1 ;;
+	esac
+done
+
