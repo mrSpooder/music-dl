@@ -4,13 +4,10 @@
 ########### MUSIC-DL ###########
 ################################
 
-# variable declarations
-CONFIG_DIR="$HOME/.config/music-dl/"
+CONFIG_DIR="$HOME/.config/music-dl"
 CONFIG_FILE="$CONFIGDIR/config"
-API="https://musicbrainz.org/ws/2"
-USER_AGENT="music-dl/0.1 ( https://github.com/mrSpooder/music-dl )"
+CACHE_DIR="$HOME/.cache/music-dl"
 
-# function declarations
 err() {
 echo "Usage: music-dl -u [TARGET URL] -a [ARTIST NAME] -A [ALBUM/EP TITLE]
 Download music and appropriate metadata.
@@ -24,12 +21,7 @@ Download music and appropriate metadata.
 -h, --help : prints this message" >&2 && exit 1 ;
 }
 
-download_audio() {
-	youtube-dl -o "%(title)s.%(ext)s" -i --geo-bypass --extract-audio --audio-format "$FMT" --audio-quality 0 "$URL";
-}
 
-
-# parse arguments
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-h|--help) err ; ;;
@@ -40,6 +32,8 @@ while [ "$#" -gt 0 ]; do
 		-S) SONG="$2"; shift 2 ;;
 		-d) DIR="$2"; shift 2 ;;
 		-f) FMT="$2"; shift 2 ;;
+		-R) MODE='R'; shift 2 ;;
+		-q) MODE='Q'; shift 2 ;;
 
 		--target-url=*) URL="${1#*=}"; shift 1 ;;
 		--artist-name=*) ARTIST="${1#*=}"; shift 1 ;;
@@ -47,23 +41,37 @@ while [ "$#" -gt 0 ]; do
 		--song-title=*) SONG="${1#*=}"; shift 1 ;;
 		--target-dir=*) DIR="${1#*=}"; shift 1 ;;
 		--format=*) FMT="${1#*=}"; shift 1 ;;
+		--remove) MODE='R'; shift 1 ;;
+		--quiet) MODE='Q'; shift 1 ;;
 
 		-*) echo "unkown option: $1" >&2 && err ;;
 	esac
 done
 
-[[ -z $URL || -z $ARTIST || -z $ALBUM ]] && echo "missing target URL, artist name or album/EP title" >&2 && err;
+#[[ $MODE='R' ]] &&
 
-[[ -z $DIR ]] && DIR=`pwd`;
+[[ -z $URL ]] && echo "missing target URL" >&2 && err;
+
+[[ -z $DIR && -d $HOME/Music ]] && DIR="$HOME/Music";
+
+[[ -z $ARTIST && -z $ALBUM && -z $SONG ]] && MODE='Q';
+
+[[ -z $ALBUM ]] && ALBUM='album';
 
 [[ -z $FMT ]] && FMT='mp3';
 
-cd '/tmp';
+if [[ -d $CACHE_DIR ]]; then
+	cd $CACHE_DIR && rm -dr *;
+else
+	mkdir $CACHE_DIR && cd $CACHE_DIR;
+fi
 
-[[ -z $SONG ]] && wget --user-agent="$USER_AGENT" -O data.json "$API/release/?query=release:$ALBUM%20AND%20artistname:$ARTIST&fmt=json"
+youtube-dl -o "$ALBUM/%(title)s.%(ext)s" -i --add-metadata --geo-bypass --extract-audio --audio-format "$FMT" --audio-quality 0 "$URL";
 
-[[ -n $SONG ]] && wget --user-agent="$USER_AGENT" -O data.json "$API/recording/
+if [[ $MODE='Q' ]]; then 
+	beet import -A -m "$DIR" -ql "$CACHE_DIR/log" `ls`;
+else
+	beet import -m "$DIR" `ls`;
+fi
 
-# search for release: wget 'https://musicbrainz.org/ws/2/release/?query=release:"Wasting Light"%20AND%20artistname:"Foo Fighters"%20AND%20country:"US"&fmt=json' 
-# get data for album and individual tracks: wget 'https://musicbrainz.org/ws/2/release/1a875005-f7eb-49ae-a20f-c66b5cc547a7?fmt=json&inc=recordings'
-# search for recording
+exit 0;
