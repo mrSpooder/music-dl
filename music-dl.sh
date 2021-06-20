@@ -7,6 +7,7 @@
 CONFIG_DIR="$HOME/.config/music-dl"
 CONFIG_FILE="$CONFIGDIR/config"
 CACHE_DIR="$HOME/.cache/music-dl"
+TEMP_DIR=$(mktemp -d 'music-dl.XXX')
 
 err() {
 echo "Usage: music-dl -u [TARGET URL] -a [ARTIST NAME] -A [ALBUM/EP TITLE]
@@ -18,7 +19,8 @@ Download music and appropriate metadata.
 -S, --song-title= : song title ibid.
 -d, --target-dir= : specify directory for download (defaults to current directory)
 -f, --format : specify audio format; ex: mp3,m4a,mp4 (defaults to mp3)
--h, --help : prints this message" >&2 && exit 1 ;
+-h, --help : prints this message
+-q --quiet : doesn't prompt the user for input (is assumed if no query fields are specified)" >&2 && exit 1 ;
 }
 
 
@@ -32,7 +34,6 @@ while [ "$#" -gt 0 ]; do
 		-S) SONG="$2"; shift 2 ;;
 		-d) DIR="$2"; shift 2 ;;
 		-f) FMT="$2"; shift 2 ;;
-		-R) MODE='R'; shift 2 ;;
 		-q) MODE='Q'; shift 2 ;;
 
 		--target-url=*) URL="${1#*=}"; shift 1 ;;
@@ -41,14 +42,11 @@ while [ "$#" -gt 0 ]; do
 		--song-title=*) SONG="${1#*=}"; shift 1 ;;
 		--target-dir=*) DIR="${1#*=}"; shift 1 ;;
 		--format=*) FMT="${1#*=}"; shift 1 ;;
-		--remove) MODE='R'; shift 1 ;;
 		--quiet) MODE='Q'; shift 1 ;;
 
 		-*) echo "unkown option: $1" >&2 && err ;;
 	esac
 done
-
-#[[ $MODE='R' ]] &&
 
 [[ -z $URL ]] && echo "missing target URL" >&2 && err;
 
@@ -60,18 +58,22 @@ done
 
 [[ -z $FMT ]] && FMT='mp3';
 
-if [[ -d $CACHE_DIR ]]; then
-	cd $CACHE_DIR && rm -dr *;
-else
-	mkdir $CACHE_DIR && cd $CACHE_DIR;
-fi
+[[ -d $TEMP_DIR ]] && cd $TEMP_DIR;
 
 youtube-dl -o "$ALBUM/%(title)s.%(ext)s" -i --add-metadata --geo-bypass --extract-audio --audio-format "$FMT" --audio-quality 0 "$URL";
+
+# loop over downloaded files and extract appropriate metadata fields (artist: album: title:)
+FILES=()
+
+i=0
+for file in *; do
+	[[ -f $file ]] && FILES[i]="$file" && i=`expr $i + 1`;
+done
 
 if [[ $MODE='Q' ]]; then 
 	beet import -A -m "$DIR" -ql "$CACHE_DIR/log" `ls`;
 else
-	beet import -m "$DIR" `ls`;
+	beet import -m "$DIR" "$ALBUM";
 fi
 
 exit 0;

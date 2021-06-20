@@ -1,11 +1,11 @@
 # music-dl
 
-A wizard for making downloading music with youtube-dl easier.
+A simple script that simplifies downloading music from youtube and embedding it with the correct metadata.
 
 ## Dependencies
 
-- youtube-dl
-- beets
+- [youtube-dl](https://youtube-dl.org/)
+- [beets](https://beets.io/)
 
 ## Installation
 
@@ -17,4 +17,4 @@ sudo make install ;`
 
 - Handle query options. (Ex: music-dl -A 'mer de noms' [URL])
 - Maybe handle removal of music from library, although that can be done with beets.
-- Finish Makefile.
+- Adjust tags before handing file over to beets.
