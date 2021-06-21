@@ -14,7 +14,7 @@ echo "Usage: music-dl -u [TARGET URL] -a [ARTIST NAME] -A [ALBUM/EP TITLE]
 Download music and appropriate metadata.
 
 -u, --target-url= : specify target URL
--a, --artist-name= : artist name in single or double quotes
+-N, --artist-name= : artist name in single or double quotes
 -A, --album-title= : album or EP title ibid.
 -S, --song-title= : song title ibid.
 -d, --target-dir= : specify directory for download (defaults to current directory)
@@ -30,13 +30,13 @@ while [ "$#" -gt 0 ]; do
 		-h|--help) err ; ;;
 
 		-u) URL="$2"; shift 2 ;;
-		-a) ARTIST="$2"; shift 2 ;;
+		-N) ARTIST="$2"; shift 2 ;;
 		-A) ALBUM="$2"; shift 2 ;;
 		-S) SONG="$2"; shift 2 ;;
 		-d) DIR="$2"; shift 2 ;;
 		-f) FMT="$2"; shift 2 ;;
-		-q) MODE='Q'; shift 2 ;;
-		-v) MODE='V'; shift 2 ;;
+		-q) MODE='1'; shift 2 ;;
+		-v) MODE='2'; shift 2 ;;
 
 		--target-url=*) URL="${1#*=}"; shift 1 ;;
 		--artist-name=*) ARTIST="${1#*=}"; shift 1 ;;
@@ -44,8 +44,8 @@ while [ "$#" -gt 0 ]; do
 		--song-title=*) SONG="${1#*=}"; shift 1 ;;
 		--target-dir=*) DIR="${1#*=}"; shift 1 ;;
 		--format=*) FMT="${1#*=}"; shift 1 ;;
-		--quiet) MODE='Q'; shift 1 ;;
-		--verbose) MODE='V'; shift 1 ;;
+		--quiet) MODE='1'; shift 1 ;;
+		--verbose) MODE='2'; shift 1 ;;
 
 		-*) echo "unkown option: $1" >&2 && err ;;
 	esac
@@ -55,9 +55,9 @@ done
 
 [[ -z $DIR && -d $HOME/Music ]] && DIR="$HOME/Music";
 
-[[ -z $ARTIST && -z $ALBUM && -z $SONG || $MODE!='V' ]] && MODE='Q';
+[[ -z $ARTIST && -z $ALBUM && -z $SONG || $MODE!='2' ]] && MODE='1';
 
-[[ -z $MODE ]] && $MODE='N';
+[[ -z $MODE ]] && $MODE='0';
 
 [[ -z $ALBUM ]] && ALBUM='album';
 
@@ -80,9 +80,9 @@ for file in *; do
 done
 
 case "$MODE" in
-	Q) beet import -A -m "$DIR" -ql "$CACHE_DIR/log" `ls` ;;
-	V) beet import -m -t "$DIR" "$ALBUM" ;;
-	N) beet import -m "$DIR" "$ALBUM" ;;
+	0) beet import -m "$DIR" "$ALBUM" ;;
+	1) beet import -A -m "$DIR" -ql "$CACHE_DIR/log" `ls` ;;
+	2) beet import -m -t "$DIR" "$ALBUM" ;;
 esac
 
 

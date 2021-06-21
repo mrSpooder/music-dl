@@ -16,3 +16,4 @@ sudo make install ;`
 ## TODO
 
 - Test
+- Handle errors
