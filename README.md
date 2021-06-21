@@ -1,6 +1,6 @@
 # music-dl
 
-A simple script that simplifies downloading music from youtube and embedding it with the correct metadata.
+A script that simplifies downloading music from youtube and embedding it with the correct metadata.
 
 ## Dependencies
 
