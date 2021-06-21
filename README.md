@@ -15,6 +15,4 @@ sudo make install ;`
 
 ## TODO
 
-- Handle query options. (Ex: music-dl -A 'mer de noms' [URL])
-- Maybe handle removal of music from library, although that can be done with beets.
-- Adjust tags before handing file over to beets.
+- Test

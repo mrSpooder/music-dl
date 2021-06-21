@@ -20,7 +20,8 @@ Download music and appropriate metadata.
 -d, --target-dir= : specify directory for download (defaults to current directory)
 -f, --format : specify audio format; ex: mp3,m4a,mp4 (defaults to mp3)
 -h, --help : prints this message
--q --quiet : doesn't prompt the user for input (is assumed if no query fields are specified)" >&2 && exit 1 ;
+-q, --quiet : doesn't prompt the user for input (is assumed if no query fields are specified)
+-v, --verbose : puts beet in timid mode, see man beet (asks even if all the results are high certainty)" >&2 && exit 1 ;
 }
 
 
@@ -35,6 +36,7 @@ while [ "$#" -gt 0 ]; do
 		-d) DIR="$2"; shift 2 ;;
 		-f) FMT="$2"; shift 2 ;;
 		-q) MODE='Q'; shift 2 ;;
+		-v) MODE='V'; shift 2 ;;
 
 		--target-url=*) URL="${1#*=}"; shift 1 ;;
 		--artist-name=*) ARTIST="${1#*=}"; shift 1 ;;
@@ -43,6 +45,7 @@ while [ "$#" -gt 0 ]; do
 		--target-dir=*) DIR="${1#*=}"; shift 1 ;;
 		--format=*) FMT="${1#*=}"; shift 1 ;;
 		--quiet) MODE='Q'; shift 1 ;;
+		--verbose) MODE='V'; shift 1 ;;
 
 		-*) echo "unkown option: $1" >&2 && err ;;
 	esac
@@ -52,7 +55,9 @@ done
 
 [[ -z $DIR && -d $HOME/Music ]] && DIR="$HOME/Music";
 
-[[ -z $ARTIST && -z $ALBUM && -z $SONG ]] && MODE='Q';
+[[ -z $ARTIST && -z $ALBUM && -z $SONG || $MODE!='V' ]] && MODE='Q';
+
+[[ -z $MODE ]] && $MODE='N';
 
 [[ -z $ALBUM ]] && ALBUM='album';
 
@@ -60,20 +65,25 @@ done
 
 [[ -d $TEMP_DIR ]] && cd $TEMP_DIR;
 
-youtube-dl -o "$ALBUM/%(title)s.%(ext)s" -i --add-metadata --geo-bypass --extract-audio --audio-format "$FMT" --audio-quality 0 "$URL";
+youtube-dl -o "$ALBUM/%(title)s.%(ext)s" -i --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT; cp -r temp.$FMT {}; rm -rf temp.$FMT";
 
-# loop over downloaded files and extract appropriate metadata fields (artist: album: title:)
-FILES=()
+cd "$ALBUM";
 
-i=0
 for file in *; do
-	[[ -f $file ]] && FILES[i]="$file" && i=`expr $i + 1`;
+	[[ -f $file ]] && DATA=$(ffprobe $file 2>&1);
+
+	[[ -z $(echo $DATA | grep -e "album[[:space:]]:" | tr -d "album :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata album="$ALBUM" "temp.$FMT" && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+
+	[[ -z $(echo $DATA | grep -e "artist[[:space:]]:" | tr -d "artist :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata artist="$ARTIST" "temp.$FMT" && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+
+	[[ -z $(echo $DATA | grep -e "title[[:space:]]:" | tr -d "title :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata title="$SONG" "temp.$FMT" && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
 done
 
-if [[ $MODE='Q' ]]; then 
-	beet import -A -m "$DIR" -ql "$CACHE_DIR/log" `ls`;
-else
-	beet import -m "$DIR" "$ALBUM";
-fi
+case "$MODE" in
+	Q) beet import -A -m "$DIR" -ql "$CACHE_DIR/log" `ls` ;;
+	V) beet import -m -t "$DIR" "$ALBUM" ;;
+	N) beet import -m "$DIR" "$ALBUM" ;;
+esac
+
 
 exit 0;
