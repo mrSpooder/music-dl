@@ -7,7 +7,7 @@
 CONFIG_DIR="$HOME/.config/music-dl"
 CONFIG_FILE="$CONFIGDIR/config"
 CACHE_DIR="$HOME/.cache/music-dl"
-TEMP_DIR=$(mktemp -d 'music-dl.XXX')
+TEMP_DIR=$(mktemp -d '/tmp/music-dl.XXX')
 
 err() {
 echo "Usage: music-dl -u [TARGET URL] -a [ARTIST NAME] -A [ALBUM/EP TITLE]
