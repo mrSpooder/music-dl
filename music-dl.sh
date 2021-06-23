@@ -4,9 +4,6 @@
 
 #!/bin/sh
 
-CONFIG_DIR="$HOME/.config/music-dl"
-CONFIG_FILE="$CONFIGDIR/config"
-CACHE_DIR="$HOME/.cache/music-dl"
 TEMP_DIR=$(mktemp -d '/tmp/music-dl.XXXXX')
 DIR="$HOME/Music"
 
@@ -64,7 +61,6 @@ done
 
 [[ -z $FMT ]] && FMT='mp3';
 
-[[ ! -d $CACHE_DIR ]] && mkdir $CACHE_DIR;
 [[ -d $TEMP_DIR ]] && cd $TEMP_DIR && mkdir $ALBUM;
 
 youtube-dl --restrict-filenames -o "$ALBUM/%(title)s.%(ext)s" -i --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT";
@@ -81,7 +77,7 @@ done
 
 case "$MODE" in
 	0) beet import -m "$DIR" "$ALBUM" ;;
-	1) beet import -A -m "$DIR" -ql "$CACHE_DIR/log" "$ALBUM" ;;
+	1) beet import -A -m "$DIR" -ql "$TEMP_DIR/log" "$ALBUM" ;;
 	2) beet import -m -t "$DIR" "$ALBUM" ;;
 esac
 
