@@ -2,7 +2,7 @@
 ########### MUSIC-DL ###########
 ################################
 
-#!/bin/sh set -v
+#!/bin/sh
 
 CONFIG_DIR="$HOME/.config/music-dl"
 CONFIG_FILE="$CONFIGDIR/config"
