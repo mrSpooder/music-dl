@@ -2,9 +2,7 @@ OS = ${shell uname -s}
 ifndef PREFIX
 	PREFIX = /usr/local
 endif
-ifndef MANPREFIX
-	MANPREFIX = ${PREFIX}/share/man
-endif
+
 INSTALL_PATH = ${PREFIX}/bin/music-dl
 
 install:
