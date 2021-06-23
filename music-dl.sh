@@ -1,13 +1,14 @@
-#!/bin/sh
-
 ################################
 ########### MUSIC-DL ###########
 ################################
 
+#!/bin/sh set -v
+
 CONFIG_DIR="$HOME/.config/music-dl"
 CONFIG_FILE="$CONFIGDIR/config"
 CACHE_DIR="$HOME/.cache/music-dl"
-TEMP_DIR=$(mktemp -d '/tmp/music-dl.XXX')
+TEMP_DIR=$(mktemp -d '/tmp/music-dl.XXXXX')
+DIR="$HOME/Music"
 
 err() {
 echo "Usage: music-dl -u [TARGET URL] -a [ARTIST NAME] -A [ALBUM/EP TITLE]
@@ -53,7 +54,7 @@ done
 
 [[ -z $URL ]] && echo "missing target URL" >&2 && err;
 
-[[ -z $DIR && -d $HOME/Music ]] && DIR="$HOME/Music";
+[[ -z $DIR && ! -d $HOME/Music ]] && DIR="$HOME/Music" && mkdir $DIR;
 
 [[ -z $ARTIST && -z $ALBUM && -z $SONG || $MODE!='2' ]] && MODE='1';
 
@@ -63,27 +64,25 @@ done
 
 [[ -z $FMT ]] && FMT='mp3';
 
-[[ -d $TEMP_DIR ]] && cd $TEMP_DIR;
+[[ ! -d $CACHE_DIR ]] && mkdir $CACHE_DIR;
+[[ -d $TEMP_DIR ]] && cd $TEMP_DIR && mkdir $ALBUM;
 
-youtube-dl -o "$ALBUM/%(title)s.%(ext)s" -i --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT; cp -r temp.$FMT {}; rm -rf temp.$FMT";
+youtube-dl --restrict-filenames -o "$ALBUM/%(title)s.%(ext)s" -i --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT";
 
-cd "$ALBUM";
+for file in $ALBUM; do
+	[[ -f "$file" ]] && DATA=$(ffprobe "$file" 2>&1);
 
-for file in *; do
-	[[ -f $file ]] && DATA=$(ffprobe $file 2>&1);
+	[[ -z $(echo $DATA | grep -e "album[[:space:]]:" | tr -d "album :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata album="$ALBUM" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
 
-	[[ -z $(echo $DATA | grep -e "album[[:space:]]:" | tr -d "album :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata album="$ALBUM" "temp.$FMT" && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+	[[ -z $(echo $DATA | grep -e "artist[[:space:]]:" | tr -d "artist :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata artist="$ARTIST" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
 
-	[[ -z $(echo $DATA | grep -e "artist[[:space:]]:" | tr -d "artist :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata artist="$ARTIST" "temp.$FMT" && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
-
-	[[ -z $(echo $DATA | grep -e "title[[:space:]]:" | tr -d "title :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata title="$SONG" "temp.$FMT" && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+	[[ -z $(echo $DATA | grep -e "title[[:space:]]:" | tr -d "title :") ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata title="$SONG" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
 done
 
 case "$MODE" in
 	0) beet import -m "$DIR" "$ALBUM" ;;
-	1) beet import -A -m "$DIR" -ql "$CACHE_DIR/log" `ls` ;;
+	1) beet import -A -m "$DIR" -ql "$CACHE_DIR/log" "$ALBUM" ;;
 	2) beet import -m -t "$DIR" "$ALBUM" ;;
 esac
-
 
 exit 0;

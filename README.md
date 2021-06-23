@@ -17,3 +17,4 @@ sudo make install ;`
 
 - Test
 - Handle errors
+- Maybe improve quiet mode
