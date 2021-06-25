@@ -21,7 +21,6 @@ Download music and appropriate metadata.
 " >&2 && exit 1 ;
 }
 
-
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-h|--help) err ; ;;
