@@ -1,16 +1,15 @@
 # music-dl
 
-A script that simplifies downloading music from youtube and embedding it with the correct metadata.
+A script that simplifies downloading and tagging music from youtube.
 
 ## Dependencies
 
 - [youtube-dl](https://youtube-dl.org/)
-- [beets](https://beets.io/)
 
 ## Installation
 
-`git clone https://github.com/mrSpooder/music-dl ;
-cd music-dl/ ;
+`git clone https://github.com/segf00lt/music-dl &&
+cd music-dl/ &&
 sudo make install ;`
 
 ## TODO
