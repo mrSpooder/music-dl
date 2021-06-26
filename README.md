@@ -15,4 +15,6 @@ sudo make install ;`
 ## TODO
 
 - Test
-- Handle errors
+- Handle errors and keyboard interrupts
+- Get track numbers from playlist index if downloading playlist
+- Put all post-download file manipulation in function `org()`
