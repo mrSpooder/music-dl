@@ -21,6 +21,45 @@ Download music from youtube.
 " >&2 && exit 1 ;
 }
 
+dl_video() {
+youtube-dl $QUIET -o "$ALBUM/%(title)s.%(ext)s" --no-playlist --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
+}
+
+dl_playlist() {
+if [[ -n $RANGE ]]; then
+	youtube-dl $QUIET --playlist-items $RANGE -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
+else
+	youtube-dl $QUIET -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
+fi
+
+if [[ "$ALBUM" != "album" ]]; then
+	mv "$(ls)" "$ALBUM" && echo "$ALBUM";
+else
+	echo "$(ls)";
+fi
+}
+
+org_tags() {
+cd "$ALBUM" ;
+FF_TAG=("album" "artist" "title" "track")
+TAG=("$ALBUM" "$ARTIST" "$SONG" "$TRACK")
+for file in *; do
+	[[ ! -f "$file" ]] && continue;
+	[[ -z $TRACK ]] && TAG[3]=$(echo "$file" | sed -n -e 's/\(0*[0-9]*\ \)\([A-Za-z0-9 ]*[&$-_\*]*[A-Za-z0-9 ]*\)\+\.[a-z0-9]\+/\1/p' | tr -d '[:alpha:][:space:]');
+	i=0
+	until [[ $i = 4 ]]; do
+		DATA=$(ffprobe -hide_banner -show_entries format_tags=${FF_TAG[$i]} -of csv -i "$file" 2>&1 | sed -n -e 's/format,//p')
+		if [[ $i = 0 ]]; then
+			[[ -z $DATA && "$ALBUM" != "album" ]] && ffmpeg -hide_banner -y -i "$file" -map 0 -c copy -metadata "${FF_TAG[$i]}=${TAG[$i]}" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+		else
+			[[ -z $DATA ]] && ffmpeg -hide_banner -y -i "$file" -map 0 -c copy -metadata "${FF_TAG[$i]}=${TAG[$i]}" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+		fi
+		i=`expr $i + 1`
+	done
+done
+cd .. ;
+}
+
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-h|--help) err ;;
@@ -65,7 +104,7 @@ DIR="$HOME/Music"
 
 [[ -z $ALBUM ]] && ALBUM='album';
 
-[[ -n $FMT && "$FMT" != "mp3" && "$FMT" != "m4a" ]] && echo "error: unsupported audio format, please use mp3 or m4a" >&2 && exit 1;
+#[[ -n $FMT && "$FMT" != "mp3" && "$FMT" != "m4a" ]] && echo "error: unsupported audio format, please use mp3 or m4a" >&2 && exit 1;
 
 [[ -z $FMT ]] && FMT="mp3";
 
@@ -79,45 +118,11 @@ fi
 
 [[ "$MODE" = "1" ]] && QUIET="-q";
 
-dl_video() {
-	youtube-dl $QUIET -o "$ALBUM/%(title)s.%(ext)s" --no-playlist --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
-}
-
-dl_playlist() {
-	if [[ -n $RANGE ]]; then
-		youtube-dl $QUIET --playlist-items $RANGE -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
-	else
-		youtube-dl $QUIET -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
-	fi
-
-	if [[ "$ALBUM" != "album" ]]; then
-		mv "$(ls)" "$ALBUM" && echo "$ALBUM";
-	else
-		echo "$(ls)";
-	fi
-}
-
 case $TYPE in
-	playlist) ALBUM="$(dl_playlist)" ;;
-	watch) dl_video ;;
+	playlist) ALBUM="$(dl_playlist)" && org_tags ;;
+	watch) dl_video && org_tags ;;
 	*) echo "error: unsupported content type" >&2 && exit 1 ;;
 esac
-
-pushd "$ALBUM" 1>/dev/null;
-
-for file in *; do
-	[[ ! -f "$file" ]] && continue;
-
-	DATA=$(ffprobe -hide_banner -show_entries format_tags=album,title,artist -of flat -i "$file" 2>&1 | sed -n -e 's/format\.tags\.//' -e 's/"//gp')
-
-	[[ -z $(echo $DATA | sed -n -e 's/album=//p') && "$ALBUM" != "album" ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata album="$ALBUM" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
-
-	[[ -z $(echo $DATA | sed -n -e 's/artist=//p') ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata artist="$ARTIST" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
-
-	[[ -z $(echo $DATA | sed -n -e 's/title=//p') ]] && ffmpeg -y -i "$file" -map 0 -c copy -metadata title="$SONG" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
-done
-
-popd 1>/dev/null;
 
 if [[ -n $ADD ]]; then
 	mv "$ALBUM" "$DIR" && cd .. && rm -fdr $TEMP_DIR && exit 0;
