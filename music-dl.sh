@@ -108,7 +108,7 @@ DIR="$HOME/Music"
 
 [[ -z $ALBUM ]] && ALBUM='album';
 
-#[[ -n $FMT && "$FMT" != "mp3" && "$FMT" != "m4a" ]] && echo "error: unsupported audio format, please use mp3 or m4a" >&2 && exit 1;
+[[ -n $FMT && "$FMT" != "mp3" && "$FMT" != "m4a" ]] && echo "error: unsupported audio format, please use mp3 or m4a" >&2 && exit 1;
 
 [[ -z $FMT ]] && FMT="mp3";
 
