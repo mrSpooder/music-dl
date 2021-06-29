@@ -5,10 +5,8 @@
 trap "exit 1" SIGHUP SIGINT SIGKILL SIGTERM EXIT;
 
 err() {
-echo "Usage: music-dl -u [TARGET URL]
-Download music from youtube.
+echo "Usage: music-dl [TARGET URL]
 
--u, --target-url= : specify target URL
 -N, --artist-name= : artist name in single or double quotes
 -A, --album-title= : album or EP title in single or double quotes
 -S, --song-title= : song title in single or double quotes
@@ -66,7 +64,6 @@ while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-h|--help) err ;;
 
-		-u) URL="$2"; shift 2 ;;
 		-N) ARTIST="$2"; shift 2 ;;
 		-A) ALBUM="$2"; shift 2 ;;
 		-S) SONG="$2"; shift 2 ;;
@@ -78,7 +75,6 @@ while [ "$#" -gt 0 ]; do
 		-q) MODE="1"; shift 1 ;;
 		-i) MODE="2"; shift 1 ;;
 
-		--target-url=*) URL="${1#*=}"; shift 1 ;;
 		--artist-name=*) ARTIST="${1#*=}"; shift 1 ;;
 		--album-title=*) ALBUM="${1#*=}"; shift 1 ;;
 		--song-title=*) SONG="${1#*=}"; shift 1 ;;
@@ -91,12 +87,16 @@ while [ "$#" -gt 0 ]; do
 		--interactive) MODE="2"; shift 1 ;;
 
 		-*) echo "error: unkown option $1" >&2 && err ;;
+
+		*) URL="$1"; shift 1 ;;
 	esac
 done
 
-[[ -z $URL ]] && echo "error: missing target URL" >&2 && err;
+[[ -z $URL ]] && URL=$(</dev/stdin) && [[ -z $URL ]] && echo "error: missing URL" >&2 && exit 1;
 
 HOSTNAME=$(echo $URL | sed -n 's/^https\?:\/\/\([^\/]\+\)\/\?.*$/\1/p')
+
+[[ -z $HOSTNAME ]] && echo "error: bad URL" >&2 && exit 1;
 
 [[ "$HOSTNAME" != "www.youtube.com" ]] && echo "error: unsupported URL" >&2 && exit 1;
 
