@@ -2,10 +2,12 @@
 
 This script simplifies downloading and tagging music from youtube. The
 download functionality comes from youtube-dl, along with **very** simple
-autotagging. Basically it downloads the audio from a given url (it may
+autotagging.
+
+Basically it downloads the audio from a given url (it may
 be a single video or a playlist), embedding it with whatever metadata
 youtube-dl is able to find, and changing some other things accordingly.
-Optionally the user can specify there own values for tags. I'd recommend
+Optionally the user can specify their own values for tags. I'd recommend
 specifying as many as you can bother because the metadata in youtube videos is
 usually incomplete, and sometimes even wrong.
 
