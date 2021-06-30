@@ -7,17 +7,17 @@ trap "exit 1" SIGHUP SIGINT SIGKILL SIGTERM EXIT;
 err() {
 echo "Usage: music-dl [TARGET URL]
 
--N, --artist-name= : artist name in single or double quotes
--A, --album-title= : album or EP title in single or double quotes
--S, --song-title= : song title in single or double quotes
--T, --track-number= : track number in single or double quotes
+-an, --artist-name= : artist name in single or double quotes
+-at, --album-title= : album or EP title in single or double quotes
+-st, --song-title= : song title in single or double quotes
+-tn, --track-number= : track number in single or double quotes
 -d, --target-dir= : specify directory for download (defaults to $HOME/Music)
 -a, --add : moves download to $DIR
+-s, --split= : splits single auido file into multiple files based on timestamps
 -f, --format : specify audio format; supported formats: mp3, m4a (defaults to mp3)
 -q, --quiet : only final directory is outputed
 -i, --interactive : prompt for input fields during runtime
--h, --help : prints this message
-" >&2 && exit 1 ;
+-h, --help : prints this message" >&2 && exit 1 ;
 }
 
 dl_video() {
@@ -40,19 +40,20 @@ fi
 }
 
 org_tags() {
-cd "$ALBUM" ;
+[[ -d "$ALBUM" ]] && cd "$ALBUM";
 FF_TAG=("album" "artist" "title" "track")
 TAG=("$ALBUM" "$ARTIST" "$SONG" "$TRACK")
 for file in *; do
 	[[ ! -f "$file" ]] && continue;
-	[[ -z $TRACK ]] && TAG[3]=$(echo "$file" | sed -n -e 's/\(0*[0-9]*\ \)\([A-Za-z0-9 ]*[&$-_\*]*[A-Za-z0-9 ]*\)\+\.[a-z0-9]\+/\1/p' | tr -d '[:alpha:][:space:]');
+	exp="\(0*[0-9]*\ \)\(\S.\+\)\.[a-z0-9]\+"
+	[[ -z $TRACK ]] && TAG[3]=$(echo "$file" | sed -ne "s/$exp/\1/p" | tr -d '[:alpha:][:space:][:punct:]&$_');
 	i=0
 	until [[ $i = 4 ]]; do
-		DATA=$(ffprobe -hide_banner -show_entries format_tags=${FF_TAG[$i]} -of csv -i "$file" 2>&1 | sed -n -e 's/format,//p')
+		[[ -n $SPLIT ]] && TAG[2]=$(echo "$file" | sed -ne "s/$exp/\2/p")
 		if [[ $i = 0 ]]; then
-			[[ -z $DATA && "$ALBUM" != "album" ]] && ffmpeg -hide_banner -y -i "$file" -map 0 -c copy -metadata "${FF_TAG[$i]}=${TAG[$i]}" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+			[[ -n "${TAG[$i]}" && "$ALBUM" != "album" ]] && ffmpeg -hide_banner -y -i "$file" -map 0 -c copy -metadata "${FF_TAG[$i]}=${TAG[$i]}" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
 		else
-			[[ -z $DATA ]] && ffmpeg -hide_banner -y -i "$file" -map 0 -c copy -metadata "${FF_TAG[$i]}=${TAG[$i]}" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
+			[[ -n "${TAG[$i]}" ]] && ffmpeg -hide_banner -y -i "$file" -map 0 -c copy -metadata "${FF_TAG[$i]}=${TAG[$i]}" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
 		fi
 		i=`expr $i + 1`
 	done
@@ -60,20 +61,42 @@ done
 cd .. ;
 }
 
+split() {
+[[ -d "$ALBUM" ]] && cd "$ALBUM";
+[[ ! -f $TIMESTAMPS ]] && echo "error: timestamps file does not exist" >&2 && exit 1;
+orig="$(ls)";
+track="1";
+exp='^\(\S.\+\)\s\([0-9]*:\?[0-9]\+:[0-9]\+\)-\([0-9]*:\?[0-9]\+:[0-9]\+\)$'
+
+while read -r line
+do
+	title="$(echo "$line" | sed -ne "s/$exp/\1/p")"
+	temp=$(echo "$title" | sed -ne "s/\//_/p")
+	[[ -n $temp ]] && title="$temp";
+	start_at="$(echo "$line" | sed -ne "s/$exp/\2/p")"
+	stop_at="$(echo "$line" | sed -ne "s/$exp/\3/p")"
+
+	ffmpeg -hide_banner -nostdin -y -f "$FMT" -i "$orig" -c copy -ss "$start_at" -to "$stop_at" "$track $title.$FMT" 2>/dev/null && track=`expr $track + 1`;
+done < "$TIMESTAMPS" ;
+rm -f "$orig";
+cd .. ;
+}
+
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-h|--help) err ;;
 
-		-N) ARTIST="$2"; shift 2 ;;
-		-A) ALBUM="$2"; shift 2 ;;
-		-S) SONG="$2"; shift 2 ;;
-		-T) TRACK="$2"; shift 2 ;;
+		-an) ARTIST="$2"; shift 2 ;;
+		-at) ALBUM="$2"; shift 2 ;;
+		-st) SONG="$2"; shift 2 ;;
+		-tn) TRACK="$2"; shift 2 ;;
 		-f) FMT="$2"; shift 2 ;;
 		-d) DIR="$2"; shift 2 ;;
 		-a) ADD='1'; shift 1 ;;
-		-R) RANGE="$2"; shift 2 ;;
-		-q) MODE="1"; shift 1 ;;
-		-i) MODE="2"; shift 1 ;;
+		-s) SPLIT='1' && TIMESTAMPS="$2"; shift 2 ;;
+		-r) RANGE="$2"; shift 2 ;;
+		-q) MODE='1'; shift 1 ;;
+		-i) MODE='2'; shift 1 ;;
 
 		--artist-name=*) ARTIST="${1#*=}"; shift 1 ;;
 		--album-title=*) ALBUM="${1#*=}"; shift 1 ;;
@@ -82,9 +105,10 @@ while [ "$#" -gt 0 ]; do
 		--format) FMT="${1#*=}"; shift 1 ;;
 		--target-dir=*) DIR="${1#*=}"; shift 1 ;;
 		--add) ADD='1'; shift 1 ;;
+		--split=*) SPLIT='1' && TIMESTAMPS="${1#*=}"; shift 1 ;;
 		--range=*) RANGE="${1#*=}"; shift 1 ;;
-		--quiet) MODE="1"; shift 1 ;;
-		--interactive) MODE="2"; shift 1 ;;
+		--quiet) MODE='1'; shift 1 ;;
+		--interactive) MODE='2'; shift 1 ;;
 
 		-*) echo "error: unkown option $1" >&2 && err ;;
 
@@ -96,11 +120,11 @@ done
 
 HOSTNAME=$(echo $URL | sed -n 's/^https\?:\/\/\([^\/]\+\)\/\?.*$/\1/p')
 
-[[ -z $HOSTNAME ]] && echo "error: bad URL" >&2 && exit 1;
-
-[[ "$HOSTNAME" != "www.youtube.com" ]] && echo "error: unsupported URL" >&2 && exit 1;
+[[ -z $HOSTNAME || "$HOSTNAME" != "www.youtube.com" ]] && echo "error: bad or unsupported URL" >&2 && exit 1;
 
 TYPE=$(echo $URL | sed -n -e "s/https:\/\/$HOSTNAME\///" -e "s/\?.*$//p")
+
+[[ -z $TYPE || "$TYPE" != "playlist" && "$TYPE" != "watch" ]] && echo "error: unsupported content type" >&2 && exit 1;
 
 DIR="$HOME/Music"
 
@@ -112,7 +136,9 @@ DIR="$HOME/Music"
 
 [[ -z $FMT ]] && FMT="mp3";
 
-TEMP_DIR=$(mktemp -d '/tmp/music-dl.XXX')
+TEMP_DIR=$(mktemp -d '/tmp/music-dlXXX')
+
+[[ -f $TIMESTAMPS ]] && cp "$TIMESTAMPS" "$TEMP_DIR/.timestamps" && TIMESTAMPS="$TEMP_DIR/.timestamps";
 
 if [[ -d $TEMP_DIR ]]; then
 	cd $TEMP_DIR;
@@ -124,8 +150,13 @@ fi
 
 case $TYPE in
 	playlist) ALBUM="$(dl_playlist)" && org_tags ;;
-	watch) dl_video && org_tags ;;
-	*) echo "error: unsupported content type" >&2 && exit 1 ;;
+	watch)
+		if [[ -n $SPLIT ]]; then
+			dl_video && split && org_tags;
+		else
+			dl_video && org_tags;
+		fi
+	;;
 esac
 
 if [[ -n $ADD ]]; then

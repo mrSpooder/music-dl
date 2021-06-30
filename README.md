@@ -28,4 +28,6 @@ with other programs. For example, you could pipe the output to
 
 - Test
 - Improve error handling
-- Add [booksplit](https://github.com/LukeSmithxyz/voidrice/blob/master/.local/bin/booksplit) like functionality
+- Add interactive mode (if I take it off the TODO again it's never coming back)
+- Make album split work with m4a
+- Write manpage
