@@ -30,4 +30,5 @@ with other programs. For example, you could pipe the output to
 - Improve error handling
 - Add interactive mode (if I take it off the TODO again it's never coming back)
 - Make album split work with m4a
+- Improve timestamp fetching
 - Write manpage

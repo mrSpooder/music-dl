@@ -71,7 +71,7 @@ exp='^\(\S.\+\)\s\([0-9]*:\?[0-9]\+:[0-9]\+\)-\([0-9]*:\?[0-9]\+:[0-9]\+\)$'
 while read -r line
 do
 	title="$(echo "$line" | sed -ne "s/$exp/\1/p")"
-	temp=$(echo "$title" | sed -ne "s/\//_/p")
+	temp="$(echo "$title" | sed -ne "s/\//_/p")"
 	[[ -n $temp ]] && title="$temp";
 	start_at="$(echo "$line" | sed -ne "s/$exp/\2/p")"
 	stop_at="$(echo "$line" | sed -ne "s/$exp/\3/p")"
