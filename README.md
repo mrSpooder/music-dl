@@ -1,18 +1,16 @@
 # music-dl
 
-This script simplifies downloading and tagging music from youtube. The
-download functionality comes from youtube-dl, along with **very** simple
-autotagging.
+This script is meant to make downloading music from youtube easier.
 
-Basically it downloads the audio from a given url (it may
-be a single video or a playlist), embedds it with whatever metadata
-youtube-dl is able to find, and writes the final download path to stdout.
-Optionally the user can specify their own values for tags. I'd recommend
-specifying as many as you can bother because the metadata in youtube videos is
-usually incomplete, and sometimes even wrong.
+Basically it downloads the audio from a given url (it may be a single video or
+a playlist), embedds it with whatever metadata youtube-dl is able to find, and
+writes the final download path to stdout. Optionally the user can specify
+their own values for tags (these take precedence over the videos existing
+metadata). I'd recommend specifying as many as possible because the
+metadata in youtube videos is usually incomplete, and sometimes even wrong.
 
-Because this script can read from stdin and write to stdout, it can be combined
-with other programs. For example, you could pipe the output to
+Also, music-dl can read from stdin and write to stdout, and therefor can be
+used as a filter. For example, you could send the output to
 [beets](https://beets.io/) to better tag and organize the music you downloaded.
 
 ## Dependencies
@@ -28,7 +26,7 @@ with other programs. For example, you could pipe the output to
 
 - Test
 - Improve error handling
-- Add interactive mode (if I take it off the TODO again it's never coming back)
+- Add interactive mode as a simple web UI for the program
 - Make album split work with m4a
-- Improve timestamp fetching
+- Improve timestamp recognition
 - Write manpage

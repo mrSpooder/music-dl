@@ -13,7 +13,7 @@ echo "Usage: music-dl [TARGET URL]
 -tn, --track-number= : track number in single or double quotes
 -d, --target-dir= : specify directory for download (defaults to $HOME/Music)
 -a, --add : moves download to $DIR
--s, --split= : splits single auido file into multiple files based on timestamps
+-s, --split= : splits single auido file into multiple files based on timestamps (mp3 only)
 -f, --format : specify audio format; supported formats: mp3, m4a (defaults to mp3)
 -q, --quiet : only final directory is outputed
 -i, --interactive : prompt for input fields during runtime
@@ -82,6 +82,15 @@ rm -f "$orig";
 cd .. ;
 }
 
+interactive() {
+<< '###'
+Make a simple web frontend where all the options and fields would be
+presented on the page either as text boxes or check boxes, in such a
+way that the user can clearly see all the options and modify them
+easily until thet're satisfied and want to execute.
+###
+}
+
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-h|--help) err ;;
@@ -137,6 +146,8 @@ DIR="$HOME/Music"
 [[ -z $FMT ]] && FMT="mp3";
 
 TEMP_DIR=$(mktemp -d '/tmp/music-dlXXX')
+
+[[ -n $SPLIT && "$FMT" != "mp3" ]] && FMT="mp3";
 
 [[ -f $TIMESTAMPS ]] && cp "$TIMESTAMPS" "$TEMP_DIR/.timestamps" && TIMESTAMPS="$TEMP_DIR/.timestamps";
 
