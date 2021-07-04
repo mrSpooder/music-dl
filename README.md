@@ -16,7 +16,7 @@ used as a filter. For example, you could send the output to
 ## Dependencies
 
 - [youtube-dl](https://youtube-dl.org/)
-- ffmpeg
+- [ffmpeg](https://ffmpeg.org/)
 
 ## Installation
 
