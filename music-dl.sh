@@ -33,9 +33,9 @@ else
 fi
 
 if [[ "$ALBUM" != "album" ]]; then
-	mv "$(ls)" "$ALBUM" && echo "$ALBUM";
+	[[ "$(ls)" != "$ALBUM" ]] && mv "$(ls)" "$ALBUM" && echo "$ALBUM";
 else
-	echo "$(ls)";
+	ls;
 fi
 }
 
@@ -171,7 +171,12 @@ case $TYPE in
 esac
 
 if [[ -n $ADD ]]; then
-	mv "$ALBUM" "$DIR" && cd .. && rm -fdr $TEMP_DIR && exit 0;
+	if [[ -n "$ARTIST" ]]; then
+		[[ ! -d "$DIR/$ARTIST" ]] && mkdir "$DIR/$ARTIST";
+		cp -r "$ALBUM" "$DIR/$ARTIST" && cd .. && exit 0;
+	else
+		cp -r "$ALBUM" "$DIR" && cd .. && exit 0;
+	fi
 else
 	echo "$(pwd)/$ALBUM" && exit 0;
 fi
