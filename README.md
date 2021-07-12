@@ -26,7 +26,6 @@ used as a filter. For example, you could send the output to
 
 - Test
 - Improve error handling
-- Add interactive mode as a simple web UI for the program
 - Make album split work with m4a
 - Improve timestamp recognition
 - Write manpage

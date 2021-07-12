@@ -14,9 +14,9 @@ echo "Usage: music-dl [TARGET URL]
 -d, --target-dir= : specify directory for download (defaults to $HOME/Music)
 -a, --add : moves download to $DIR
 -s, --split= : splits single auido file into multiple files based on timestamps (mp3 only)
+-r, --range= : specify range in playlist
 -f, --format : specify audio format; supported formats: mp3, m4a (defaults to mp3)
 -q, --quiet : only final directory is outputed
--i, --interactive : prompt for input fields during runtime
 -h, --help : prints this message" >&2 && exit 1 ;
 }
 
@@ -26,17 +26,12 @@ youtube-dl $QUIET -o "$ALBUM/$TRACK%(title)s.%(ext)s" --no-playlist --add-metada
 }
 
 dl_playlist() {
-if [[ -n $RANGE ]]; then
-	youtube-dl $QUIET --playlist-items $RANGE -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
-else
-	youtube-dl $QUIET -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
-fi
+[[ -n $RANGE ]] && RANGE="--playlist-items $RANGE"
+youtube-dl $QUIET $RANGE -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
 
-if [[ "$ALBUM" != "album" ]]; then
-	[[ "$(ls)" != "$ALBUM" ]] && mv "$(ls)" "$ALBUM" && echo "$ALBUM";
-else
-	ls;
-fi
+playlist_title="$(ls)"
+[[ "$ALBUM" != "album" && "$ALBUM" != "$playlist_title" ]] && mv "$playlist_title" "$ALBUM";
+echo "$ALBUM"
 }
 
 org_tags() {
@@ -82,15 +77,6 @@ rm -f "$orig";
 cd .. ;
 }
 
-interactive() {
-<< '###'
-Make a simple web frontend where all the options and fields would be
-presented on the page either as text boxes or check boxes, in such a
-way that the user can clearly see all the options and modify them
-easily until thet're satisfied and want to execute.
-###
-}
-
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		-h|--help) err ;;
@@ -105,7 +91,6 @@ while [ "$#" -gt 0 ]; do
 		-s) SPLIT='1' && TIMESTAMPS="$2"; shift 2 ;;
 		-r) RANGE="$2"; shift 2 ;;
 		-q) MODE='1'; shift 1 ;;
-		-i) MODE='2'; shift 1 ;;
 
 		--artist-name=*) ARTIST="${1#*=}"; shift 1 ;;
 		--album-title=*) ALBUM="${1#*=}"; shift 1 ;;
@@ -117,7 +102,6 @@ while [ "$#" -gt 0 ]; do
 		--split=*) SPLIT='1' && TIMESTAMPS="${1#*=}"; shift 1 ;;
 		--range=*) RANGE="${1#*=}"; shift 1 ;;
 		--quiet) MODE='1'; shift 1 ;;
-		--interactive) MODE='2'; shift 1 ;;
 
 		-*) echo "error: unkown option $1" >&2 && err ;;
 
@@ -125,7 +109,10 @@ while [ "$#" -gt 0 ]; do
 	esac
 done
 
-[[ -z $URL ]] && URL=$(</dev/stdin) && [[ -z $URL ]] && echo "error: missing URL" >&2 && exit 1;
+if [[ -z $URL ]]; then
+	[[ ! -p /dev/stdin ]] && echo "error: missing URL" >&2 && exit 1;
+	URL=$(</dev/stdin);
+fi
 
 HOSTNAME=$(echo $URL | sed -n 's/^https\?:\/\/\([^\/]\+\)\/\?.*$/\1/p')
 
