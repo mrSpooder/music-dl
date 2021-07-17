@@ -26,6 +26,6 @@ used as a filter. For example, you could send the output to
 
 - Test
 - Improve error handling
-- Make album split work with m4a
-- Improve timestamp recognition
+- Make album split work with m4a (requires generating new MOOV atoms for each audio file created by `split()`)
+- Improve timestamp recognition (fuzzier REGEX for matching timestamps and their titles)
 - Write manpage
