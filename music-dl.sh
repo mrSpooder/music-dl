@@ -11,8 +11,8 @@ echo "Usage: music-dl [TARGET URL]
 -at, --album-title= : album or EP title in single or double quotes
 -st, --song-title= : song title in single or double quotes
 -tn, --track-number= : track number in single or double quotes
--d, --target-dir= : specify directory for download (defaults to $HOME/Music)
--y, --year= : specify release year
+-d, --date= : specify release date
+-t, --target-dir= : specify directory for download (defaults to $HOME/Music)
 -a, --add : moves download to $DIR
 -s, --split=<path_to_timestamps> : splits single auido file into multiple files based on timestamps (mp3 only)
 -r, --range= : specify range in playlist
@@ -82,9 +82,9 @@ while [ "$#" -gt 0 ]; do
 		-at) ALBUM="$2"; shift 2 ;;
 		-st) SONG="$2"; shift 2 ;;
 		-tn) TRACK="$2"; shift 2 ;;
-		-y) DATE="$2"; shift 2 ;;
+		-d) DATE="$2"; shift 2 ;;
 		-f) FMT="$2"; shift 2 ;;
-		-d) DIR="$2"; shift 2 ;;
+		-t) DIR="$2"; shift 2 ;;
 		-a) ADD='1'; shift 1 ;;
 		-s) SPLIT='1'; shift 1 ;;
 		-r) RANGE="$2"; shift 2 ;;
@@ -94,7 +94,7 @@ while [ "$#" -gt 0 ]; do
 		--album-title=*) ALBUM="${1#*=}"; shift 1 ;;
 		--song-title=*) SONG="${1#*=}"; shift 1 ;;
 		--track-number=*) TRACK="${1#*=}"; shift 1 ;;
-		--year=*) DATE="${1#*=}"; shift 1 ;;
+		--date=*) DATE="${1#*=}"; shift 1 ;;
 		--format) FMT="${1#*=}"; shift 1 ;;
 		--target-dir=*) DIR="${1#*=}"; shift 1 ;;
 		--add) ADD='1'; shift 1 ;;
