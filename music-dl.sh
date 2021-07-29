@@ -21,12 +21,12 @@ echo "Usage: music-dl [TARGET URL]
 }
 
 dl_video() {
-youtube-dl $QUIET -o "$ALBUM/$TRACK\ %(title)s.%(ext)s" --no-playlist --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
+youtube-dl $QUIET -o "$ALBUM/$TRACK\ %(title)s.%(ext)s" --no-playlist --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
 }
 
 dl_playlist() {
 [[ -n $RANGE ]] && RANGE="--playlist-items $RANGE"
-youtube-dl $QUIET $RANGE -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" -metadata purl=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
+youtube-dl $QUIET $RANGE -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" --add-metadata --geo-bypass -x --audio-format "$FMT" --audio-quality 0 "$URL" --exec "ffmpeg -hide_banner -y -i {} -map 0 -c copy -metadata comment=\"\" -metadata description=\"\" temp.$FMT 2>/dev/null; cp -r temp.$FMT {}; rm -rf temp.$FMT" 1>&2;
 
 playlist_title="$(ls)"
 [[ "$ALBUM" != "album" && "$ALBUM" != "$playlist_title" ]] && mv "$playlist_title" "$ALBUM";
@@ -130,25 +130,23 @@ DIR="$HOME/Music"
 
 [[ -z $FMT ]] && FMT="mp3";
 
-TEMP_DIR=$(mktemp -d '/tmp/music-dlXXX')
+TEMP_DIR=$(mktemp -d '/tmp/music-dlXXX');
+
+[[ ! -d $TEMP_DIR ]] && echo "error: tempdir not created" >&2 && exit 1;
 
 [[ -n $SPLIT && "$FMT" != "mp3" ]] && FMT="mp3";
 
 if [[ -n $SPLIT && -z $TIMESTAMPS ]]; then
 	[[ -z $EDITOR ]] && EDITOR=vi;
-	echo -e "# Enter timestamps in the form: 'title' 'begin'-'end'\n# format 'begin' and 'end' as '00:00' and '10:00' for example" > time;
-	$EDITOR time && sed -i -e "s/\s*#.*$//g" -e "/^$/d" time;
+	echo -e "# Enter timestamps in the form: 'title' 'begin'-'end'\n# format 'begin' and 'end' as '00:00' and '10:00' for example" > timestamps;
+	$EDITOR timestamps && sed -i -e "s/\s*#.*$//g" -e "/^$/d" timestamps;
 	[[ ! -s time ]] && echo "error: timestamps empty" >&2 && exit 1;
-	TIMESTAMPS=time;
+	TIMESTAMPS=timestamps;
 fi
 
 [[ -f $TIMESTAMPS ]] && cp "$TIMESTAMPS" "$TEMP_DIR/.timestamps" && TIMESTAMPS="$TEMP_DIR/.timestamps";
 
-if [[ -d $TEMP_DIR ]]; then
-	cd $TEMP_DIR;
-else
-	echo "error: tempdir not created" >&2 && exit 1;
-fi
+cd $TEMP_DIR;
 
 [[ "$MODE" = "1" ]] && QUIET="-q";
 
