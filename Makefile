@@ -9,10 +9,7 @@ install:
 	cp -f music-dl.sh ${INSTALL_PATH}
 	chmod 755 ${INSTALL_PATH}
 
-clean:
-	rm -f ${INSTALL_PATH}
-
-uninstall:
+clean uninstall:
 	rm -f ${INSTALL_PATH}
 
 .PHONY: install clean uninstall

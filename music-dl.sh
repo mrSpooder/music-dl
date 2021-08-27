@@ -36,13 +36,19 @@ echo "$ALBUM"
 
 org_tags() {
 [[ -d "$ALBUM" ]] && cd "$ALBUM";
+
 KEY=("album" "artist" "title" "track" "date")
 VAL=("$ALBUM" "$ARTIST" "$SONG" "$TRACK" "$DATE")
 exp="\(0*[0-9]*\ \)\(\S.\+\)\.[a-z0-9]\+"
+
 for file in *; do
+
 	[[ ! -f "$file" ]] && continue;
+
 	VAL[3]=$(echo "$file" | sed -ne "s/$exp/\1/p" | tr -d '[:alpha:][:space:][:punct:]&$_');
+
 	[[ -z $SONG ]] && VAL[2]=$(echo "$file" | sed -ne "s/$exp/\2/p")
+
 	for i in `seq 0 4`; do
 		if [[ $i = 0 ]]; then
 			[[ -n "${VAL[$i]}" && "$ALBUM" != "album" ]] && ffmpeg -hide_banner -y -i "$file" -map 0 -c copy -metadata "${KEY[$i]}=${VAL[$i]}" "temp.$FMT" 2>/dev/null && cp -r "temp.$FMT" "$file" && rm -rf "temp.$FMT";
@@ -57,6 +63,7 @@ cd .. ;
 split() {
 [[ -d "$ALBUM" ]] && cd "$ALBUM";
 [[ ! -f $TIMESTAMPS ]] && echo "error: timestamps file not created" >&2 && exit 1;
+
 orig="$(ls)";
 track="1";
 exp='^\(\S.\+\)\s\([0-9]*:\?[0-9]\+:[0-9]\+\)-\([0-9]*:\?[0-9]\+:[0-9]\+\)$'
