@@ -26,6 +26,6 @@ the music you downloaded.
 ## TODO
 
 - Test
-- Improve error handling
+- Improve error handling (may be something wrong with youtube-dl istelf)
 - Make album split work with m4a (requires generating new MOOV atoms for each audio file created by `split()`)
 - Improve timestamp recognition (fuzzier REGEX for matching timestamps and their titles)
