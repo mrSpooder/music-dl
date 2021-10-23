@@ -1,6 +1,6 @@
 # music-dl
 
-This script is meant to make downloading music from youtube easier.
+A script to make downloading music from youtube easier.
 
 Basically it downloads the audio from a given url (it may be a single video or
 a playlist), embeds it with whatever metadata youtube-dl is able to find, and
