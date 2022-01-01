@@ -5,19 +5,20 @@
 trap "exit 1" SIGHUP SIGINT SIGKILL SIGTERM EXIT;
 
 err() {
-	echo "Usage: music-dl [OPTIONS] [TARGET URL]
-	-an, --artist-name= : artist name in single or double quotes
-	-at, --album-title= : album or EP title in single or double quotes
-	-st, --song-title= : song title in single or double quotes
-	-tn, --track-number= : track number in single or double quotes
-	-d, --date= : specify release date
-	-t, --target-dir= : specify directory for download (defaults to $HOME/Music)
-	-a, --add : moves download to $DIR
-	-s, --split=<path_to_timestamps> : splits single auido file into multiple files based on timestamps (mp3 only)
-	-r, --range= : specify range in playlist
-	-f, --format : specify audio format; supported formats: mp3, m4a (defaults to mp3)
-	-q, --quiet : only final directory is outputed
-	-h, --help : prints this message" >&2 && exit 1 ;
+	echo \
+"Usage: music-dl [OPTIONS] [TARGET URL]
+-an, --artist-name= : artist name in single or double quotes
+-at, --album-title= : album or EP title in single or double quotes
+-st, --song-title= : song title in single or double quotes
+-tn, --track-number= : track number in single or double quotes
+-d, --date= : specify release date
+-t, --target-dir= : specify directory for download (defaults to $HOME/Music)
+-a, --add : moves download to $DIR
+-s, --split=<path_to_timestamps> : splits single auido file into multiple files based on timestamps (mp3 only)
+-r, --range= : specify range in playlist
+-f, --format : specify audio format; supported formats: mp3, m4a (defaults to mp3)
+-q, --quiet : only final directory is outputed
+-h, --help : prints this message" >&2 && exit 1 ;
 }
 
 dl_video() {
@@ -38,7 +39,7 @@ dl_video() {
 dl_playlist() {
 	local FMT="$1"
 	local URL="$2"
-	local DL_FLAGS="--audio-format $FMT --audio-quality 0"
+	local DL_FLAGS="--add-metadata --geo-bypass -x --audio-format $FMT --audio-quality 0"
 	local EXEC_CMD="ffmpeg -hide_banner -y -i {} -map 0 -c copy \
 		-metadata comment=\"\" \
 		-metadata description=\"\" \
@@ -171,7 +172,7 @@ TYPE=$(echo $URL | sed -n -e "s/https:\/\/$HOSTNAME\///" -e "s/\?.*$//p")
 
 [[ -z $TYPE || "$TYPE" != "playlist" && "$TYPE" != "watch" ]] && echo "error: unsupported content type" >&2 && exit 1;
 
-DIR="$HOME/Music"
+[[ -z $DIR ]] && DIR="$HOME/Music"
 
 [[ -z $DIR && ! -d $HOME/Music ]] && mkdir $DIR;
 
