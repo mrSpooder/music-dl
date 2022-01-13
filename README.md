@@ -16,7 +16,7 @@ the music you downloaded.
 
 ## Dependencies
 
-- [youtube-dl](https://youtube-dl.org/)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - [ffmpeg](https://ffmpeg.org/)
 
 ## Installation

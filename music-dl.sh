@@ -33,7 +33,7 @@ dl_video() {
 		rm -rf temp.$FMT"
 
 	trap "exit 1" SIGHUP SIGINT SIGKILL SIGTERM EXIT;
-	youtube-dl $QUIET $DL_FLAGS -o "$ALBUM/$TRACK\ %(title)s.%(ext)s" "$URL" --exec "$EXEC_CMD" 1>&2;
+	yt-dlp $QUIET $DL_FLAGS -o "$ALBUM/$TRACK\ %(title)s.%(ext)s" "$URL" --exec "$EXEC_CMD" 1>&2;
 }
 
 dl_playlist() {
@@ -49,7 +49,7 @@ dl_playlist() {
 
 	[[ -n $RANGE ]] && RANGE="--playlist-items $RANGE"
 	trap "exit 1" SIGHUP SIGINT SIGKILL SIGTERM EXIT;
-	youtube-dl $QUIET -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" $DL_FLAGS $RANGE "$URL" \
+	yt-dlp $QUIET -o "%(playlist_title)s/%(playlist_index)s %(title)s.%(ext)s" $DL_FLAGS $RANGE "$URL" \
 		--exec "$EXEC_CMD" 1>&2;
 
 	local playlist_title="$(ls)"
